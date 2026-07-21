@@ -101,55 +101,16 @@ void apply_optimizations() {
 
 
 
-    if (args.is_v18_tls || args.is_v5_rapid || args.is_v6_void || args.is_v8_phantom || args.is_v7_pipe || args.is_v12_eclipse || args.is_v14_phantom || args.is_v20_ws) {
+    if (args.is_v5_rapid || args.is_v6_void || args.is_v8_phantom || args.is_v7_pipe || args.is_v12_eclipse || args.is_v14_phantom || args.is_v20_ws) {
         SSL_library_init();
         OpenSSL_add_all_algorithms();
         SSL_load_error_strings();
         ssl_ctx = SSL_CTX_new(TLS_client_method());
         SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_NONE, NULL);
+        
         SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION);
-        SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_3_VERSION);
-        const char *cipher_lists[] = {
-            "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305",
-            "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305",
-            "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305",
-            "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256"
-        };
-        const char *cipher_suites[] = {
-            "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256",
-            "TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256",
-            "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256",
-            "TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384"
-        };
-        int tls_fingerprint = fast_rand() % 4;
-        SSL_CTX_set_cipher_list(ssl_ctx, cipher_lists[tls_fingerprint]);
-        SSL_CTX_set_ciphersuites(ssl_ctx, cipher_suites[tls_fingerprint]);
-        SSL_CTX_set_options(ssl_ctx, SSL_OP_ALL | SSL_OP_NO_TICKET | SSL_OP_NO_COMPRESSION | SSL_OP_NO_RENEGOTIATION);
-        SSL_CTX_set_session_cache_mode(ssl_ctx, SSL_SESS_CACHE_CLIENT);
-        SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-        SSL_CTX_set1_sigalgs_list(ssl_ctx, "ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256:rsa_pss_pss_sha256:rsa_pkcs1_sha256:ecdsa_secp384r1_sha384:rsa_pss_rsae_sha384:rsa_pss_pss_sha384:ecdsa_secp521r1_sha512:ecdsa_secp256r1_sha256");
-        int group_choice = fast_rand() % 4;
-        switch (group_choice) {
-            case 0: SSL_CTX_set1_groups_list(ssl_ctx, "X25519:P-256:P-384:P-521"); break;
-            case 1: SSL_CTX_set1_groups_list(ssl_ctx, "P-256:X25519:P-384:P-521"); break;
-            case 2: SSL_CTX_set1_groups_list(ssl_ctx, "P-384:X25519:P-256:P-521"); break;
-            default: SSL_CTX_set1_groups_list(ssl_ctx, "P-256:P-384:X25519:P-521"); break;
-        }
-        unsigned char alpn_h2_http1[] = {2, 'h', '2', 8, 'h', 't', 't', 'p', '/', '1', '.', '1'};
-        unsigned char alpn_http1_h2[] = {8, 'h', 't', 't', 'p', '/', '1', '.', '1', 2, 'h', '2'};
-        unsigned char alpn_h2[] = {2, 'h', '2'};
-        unsigned char alpn_http1[] = {8, 'h', 't', 't', 'p', '/', '1', '.', '1'};
-        unsigned char alpn_h2_http1_secure[] = {2, 'h', '2', 8, 'h', 't', 't', 'p', '/', '1', '.', '1', 2, 'h', '2'};
-        unsigned char alpn_http1_h2_secure[] = {8, 'h', 't', 't', 'p', '/', '1', '.', '1', 2, 'h', '2', 8, 'h', '2', 'p', '/', '1'};
-        int alpn_choice = fast_rand() % 6;
-        switch (alpn_choice) {
-            case 0: SSL_CTX_set_alpn_protos(ssl_ctx, alpn_h2_http1, sizeof(alpn_h2_http1)); break;
-            case 1: SSL_CTX_set_alpn_protos(ssl_ctx, alpn_http1_h2, sizeof(alpn_http1_h2)); break;
-            case 2: SSL_CTX_set_alpn_protos(ssl_ctx, alpn_h2, sizeof(alpn_h2)); break;
-            case 3: SSL_CTX_set_alpn_protos(ssl_ctx, alpn_http1, sizeof(alpn_http1)); break;
-            case 4: SSL_CTX_set_alpn_protos(ssl_ctx, alpn_h2_http1_secure, sizeof(alpn_h2_http1_secure)); break;
-            default: SSL_CTX_set_alpn_protos(ssl_ctx, alpn_http1_h2_secure, sizeof(alpn_http1_h2_secure)); break;
-        }
+        SSL_CTX_set_cipher_list(ssl_ctx, "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305");
+        SSL_CTX_set_ciphersuites(ssl_ctx, "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256");
     }
 }
 
@@ -159,11 +120,25 @@ int resolve_host(const char *host, char *ip_buf) {
         ip_buf[63] = '\0';
         return 0;
     }
-    struct hostent *he = gethostbyname(host);
-    if (!he) return -1;
-    struct in_addr **addr_list = (struct in_addr **)he->h_addr_list;
-    strncpy(ip_buf, inet_ntoa(*addr_list[0]), 63);
+    
+    struct in_addr _addr;
+    if (inet_pton(AF_INET, host, &_addr) == 1) {
+        strncpy(ip_buf, host, 63);
+        ip_buf[63] = '\0';
+        return 0;
+    }
+    
+    struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host, NULL, &hints, &res) != 0) {
+        return -1;
+    }
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *)res->ai_addr;
+    inet_ntop(AF_INET, &(ipv4->sin_addr), ip_buf, 63);
     ip_buf[63] = '\0';
+    freeaddrinfo(res);
     return 0;
 }
 
