@@ -25,6 +25,7 @@ on:
           - v18_tcp
           - v18_tls
           - tls
+          - v17_proxy
           - vn
           - sockstress_v15
           - persist_v10
@@ -56,22 +57,6 @@ on:
         options:
           - 'true'
           - 'false'
-      prefer_us_proxy:
-        description: 'Prefer US proxies'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
-      proxy_pool_id:
-        description: 'Proxy pool id'
-        required: false
-        default: '0'
-      proxy_pool_size:
-        description: 'Proxy pool size'
-        required: false
-        default: '1'
 
 jobs:
   setup:
@@ -182,12 +167,6 @@ jobs:
         if [ "${{ github.event.inputs.use_proxy }}" = "true" ]; then
           PROXY_FLAG=""
         fi
-        PREFER_US_FLAG=""
-        if [ "${{ github.event.inputs.prefer_us_proxy || 'false' }}" = "true" ]; then
-          PREFER_US_FLAG="--prefer-us-proxy"
-        fi
-        POOL_ID="${{ github.event.inputs.proxy_pool_id || '0' }}"
-        POOL_SIZE="${{ github.event.inputs.proxy_pool_size || '1' }}"
         
         SYNC_TS="${{ needs.setup.outputs.sync_ts }}"
         START_TS="${{ github.event.inputs.start_timestamp || '0' }}"
@@ -203,7 +182,7 @@ jobs:
         fi
         
         ulimit -n 1000000 2>/dev/null || ulimit -n 65535 || true
-        sudo sh -c "ulimit -n 1000000 2>/dev/null; cpulimit -l 90 -f -- ./svc $TARGET_IP $TARGET_PORT $RATE $DURATION $METHOD $THREADS $PROXY_FLAG $PREFER_US_FLAG --proxy-pool-id $POOL_ID --proxy-pool-size $POOL_SIZE || exec ./svc $TARGET_IP $TARGET_PORT $RATE $DURATION $METHOD $THREADS $PROXY_FLAG $PREFER_US_FLAG --proxy-pool-id $POOL_ID --proxy-pool-size $POOL_SIZE"
+        sudo sh -c "ulimit -n 1000000 2>/dev/null; cpulimit -l 90 -f -- ./svc $TARGET_IP $TARGET_PORT $RATE $DURATION $METHOD $THREADS $PROXY_FLAG || exec ./svc $TARGET_IP $TARGET_PORT $RATE $DURATION $METHOD $THREADS $PROXY_FLAG"
 
     - name: Cleanup
       if: always()
