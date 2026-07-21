@@ -68,9 +68,7 @@ typedef struct {
     int port;
     char user[64];
     char pass[64];
-    char country[8];
     int has_auth;
-    int is_us;
     int fail_count;
     int success_count;
     int is_dead;
@@ -104,6 +102,7 @@ typedef struct {
     int is_v15_raw_amp;
     int is_v16_dns_amp;
     int is_v17_tcp_bypass;
+    int is_v17_safe_proxy;
     int is_v18_quic;
     int is_v18_tls;
     int is_v18_tcp;
@@ -119,10 +118,6 @@ typedef struct {
     int is_xdp_filter;
     char xdp_interface[32];
     int is_dry_run;
-    int prefer_us_proxy;
-    int proxy_pool_id;
-    int proxy_pool_size;
-    int proxy_max_conns;
 } Arguments;
 
 typedef struct Connection {
