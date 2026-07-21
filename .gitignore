@@ -1,0 +1,12 @@
+*.o
+*.so
+*.a
+build/
+.env
+*.pyc
+node_modules/
+.idea/
+*.bak
+dist/
+__pycache__/
+.vscode/
